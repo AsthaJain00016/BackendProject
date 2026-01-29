@@ -1,0 +1,16 @@
+{
+  "name": "projectinbackend",
+  "version": "1.0.0",
+  "description": "A backend project looks like youtube",
+  "keywords": [
+    "backend",
+    "javascript"
+  ],
+  "license": "ISC",
+  "author": "Astha Jain",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
