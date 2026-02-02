@@ -106,8 +106,8 @@ const loginUser = asyncHandler(async (req, res) => {
     // access and refresh token generate krke 
     // access aur refresh token user ko cookies mai send krdo
 
-    const { email, username, password } = req.body;
-    if (!(username || email)) {
+    const { email, username, password } = req.body || {};
+    if (!username && !email) {
         throw new ApiError(400, "username or email is required")
     }
 
@@ -122,7 +122,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const isPasswordValid = await user.isPasswordCorrect(password);
 
     if (!isPasswordValid) {
-        throw ApiError(401, "Invalid user credentials")
+        throw new ApiError(401, "Invalid user credentials")
     }
 
 
@@ -152,8 +152,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1
             }
         },
         {
