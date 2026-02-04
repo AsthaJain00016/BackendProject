@@ -10,12 +10,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
 
     //Pagination is a backend technique used to divide large datasets into smaller chunks to improve performance, scalability, and user experience.
-    const pageNumber = Number(page);
-    const limitNumber = Number(limit);
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.max(Number(limit) || 10, 1);
+
 
     const skip = (pageNumber - 1) * limitNumber;
 
-    const filter = {}  //This object will decide:which videos should be fetched Initially empty → fetch all videos.
+    const filter = {
+        isPublished:true
+    }  //This object will decide:which videos should be fetched Initially empty → fetch all videos.
 
     if (query) {
         filter.$or = [
@@ -25,7 +28,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     if (userId) {
-        filter.owner = userId;
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new ApiError(400, "Invalid user id format");
+    }
+    filter.owner = userId;
     }
 
     const sort = {};
@@ -34,7 +40,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const videos = await Video.find(filter)
         .sort(sort)
         .skip(skip)
-        .limit(limitNumber);
+        .limit(limitNumber)
+        .populate("owner","username avatar")
 
     const totalVideos = await Video.countDocuments(filter)
 
