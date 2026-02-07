@@ -77,12 +77,15 @@ Save metadata in DB
 Send success response
 
     */
+   console.log("FILES:", req.files);
+console.log("BODY:", req.body);
+
 
     if (!title || !description) {
         throw new ApiError(401, "Title and descriptiion are required")
     }
 
-    const videoFileLocalPath = req.file?.videoFile?.[0].path;
+    const videoFileLocalPath = req.files?.videoFile[0].path
 
     if (!videoFileLocalPath) {
         throw new ApiError(400, "Video file is missing")

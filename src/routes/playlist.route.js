@@ -5,7 +5,7 @@ import {verifyJWT} from "../middlewares/auth.middleware.js"
 const router=Router();
 router.use(verifyJWT)
 
-router.route("/")/post(createPlaylist)
+router.route("/").post(createPlaylist)
 
 router.route("/:playlistId")
 .get(getPlaylistById)
