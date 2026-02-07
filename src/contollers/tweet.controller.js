@@ -42,7 +42,20 @@ const getUserTweets = asyncHandler(async (req, res) => {
     .sort({createdAt:-1})
     .populate("owner","username avatar")
 
-    return res.status(200).json(new ApiResponse(200,tweets,"User tweets fetchedd successfully"))
+    // Add like information for each tweet
+    const tweetsWithLikes = await Promise.all(
+        tweets.map(async (tweet) => {
+            const likesCount = await mongoose.model('Like').countDocuments({ tweet: tweet._id });
+            const isLiked = req.user ? await mongoose.model('Like').findOne({ tweet: tweet._id, likedBy: req.user._id }) : false;
+            return {
+                ...tweet.toObject(),
+                likesCount,
+                isLiked: !!isLiked
+            };
+        })
+    );
+
+    return res.status(200).json(new ApiResponse(200,tweetsWithLikes,"User tweets fetched successfully"))
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
