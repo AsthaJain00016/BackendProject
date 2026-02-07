@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.model.js";
+import { Tweet } from "../models/tweet.model.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
     //TODO: get all comments for a video
@@ -101,9 +102,59 @@ const deleteComment = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200,{},"Comment delete successfully"))
 })
 
+const getTweetComments = asyncHandler(async (req, res) => {
+    //TODO: get all comments for a tweet
+    const { tweetId } = req.params
+    const { page = 1, limit = 10 } = req.query
+    if (!mongoose.Types.ObjectId.isValid(tweetId)) {
+        throw new ApiError(400, "Invalid tweet id format")
+    }
+    const pageNumber = Math.max(Number(page), 1)
+    const limitNumber = Math.max(Number(limit), 1)
+    const skip = (pageNumber - 1) * limitNumber
+
+    console.log('Fetching comments for tweetId:', tweetId);
+    const comments = await Comment.find({ tweet: new mongoose.Types.ObjectId(tweetId) })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .populate("owner", "username avatar")
+    console.log('Comments found:', comments.length, comments);
+
+    return res.status(200).json(new ApiResponse(200, comments, "Comments fetched successfully"))
+})
+
+const addTweetComment = asyncHandler(async (req, res) => {
+    // TODO: add a comment to a tweet
+    const { tweetId } = req.params;
+    const { content } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(tweetId)) {
+        throw new ApiError(400, "Invalid tweetId format")
+    }
+
+    if (!content || !content.trim()) {
+        throw new ApiError(400, "Comment content is required")
+    }
+    const tweet = await Tweet.findById(tweetId)
+    if (!tweet) {
+        throw new ApiError(404, "Tweet not found")
+    }
+
+    const comment = await Comment.create({
+        content,
+        tweet: new mongoose.Types.ObjectId(tweetId),
+        owner: req.user._id
+    })
+
+    return res.status(201).json(new ApiResponse(200, comment, "Comment added successfully"))
+})
+
 export {
     getVideoComments,
     addComment,
     updateComment,
-    deleteComment
+    deleteComment,
+    getTweetComments,
+    addTweetComment
 }
