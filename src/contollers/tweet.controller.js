@@ -110,13 +110,32 @@ const deleteTweet = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200,{},"Tweet deleted successfully"))
 })
 
-const allTweets=asyncHandler(async(req,res)=>{
-    
-})
+const allTweets = asyncHandler(async (req, res) => {
+    // Fetch all tweets, sorted by creation date descending
+    const tweets = await Tweet.find({})
+        .sort({ createdAt: -1 })
+        .populate("owner", "username avatar");
+
+    // Add like information for each tweet
+    const tweetsWithLikes = await Promise.all(
+        tweets.map(async (tweet) => {
+            const likesCount = await mongoose.model('Like').countDocuments({ tweet: tweet._id });
+            const isLiked = req.user ? await mongoose.model('Like').findOne({ tweet: tweet._id, likedBy: req.user._id }) : false;
+            return {
+                ...tweet.toObject(),
+                likesCount,
+                isLiked: !!isLiked
+            };
+        })
+    );
+
+    return res.status(200).json(new ApiResponse(200, tweetsWithLikes, "All tweets fetched successfully"));
+});
 
 export {
     createTweet,
     getUserTweets,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    allTweets
 }
