@@ -146,8 +146,9 @@ const addTweetComment = asyncHandler(async (req, res) => {
         tweet: new mongoose.Types.ObjectId(tweetId),
         owner: req.user._id
     })
+    await comment.populate("owner","username avatar")
 
-    return res.status(201).json(new ApiResponse(200, comment, "Comment added successfully"))
+    return res.status(201).json(new ApiResponse(200, comment, "Comment to the tweet added successfully"))
 })
 
 export {
