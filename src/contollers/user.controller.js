@@ -359,6 +359,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         {
             $project: {
+                _id: 1,
                 fullName: 1,
                 username: 1,
                 subscribersCount: 1,
@@ -437,6 +438,76 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         )
 })
 
+const getUserById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    if (!id?.trim()) {
+        throw new ApiError(400, "User ID is missing");
+    }
+
+    // Aggregation pipeline to get user details with subscribers and subscribedTo counts
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(id)
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+            }
+        }
+    ]);
+
+    if (!user?.length) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user[0], "User fetched successfully"));
+});
 
 export {
     registerUser,
@@ -450,4 +521,5 @@ export {
     updateUserCoverImage,
     getUserChannelProfile,
     getWatchHistory,
+    getUserById,
 }
