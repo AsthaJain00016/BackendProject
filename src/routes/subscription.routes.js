@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { toggleSubscription,getUserChannelSubscribers,getSubscribedChannels } from "../contollers/subscription.controller.js";
+import { toggleSubscription,getUserChannelSubscribers,getSubscribedChannels, checkSubscriptionStatus } from "../contollers/subscription.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 
@@ -12,5 +12,7 @@ router.route("/c/:channelId")
 .post(toggleSubscription)
 
 router.route("/u/:subscriberId").get(getSubscribedChannels)
+
+router.route("/s/:subscriberId/:channelId").get(checkSubscriptionStatus)
 
 export default router

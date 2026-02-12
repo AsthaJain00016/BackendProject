@@ -67,8 +67,26 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 })
 
 
+const checkSubscriptionStatus = asyncHandler(async (req, res) => {
+    const { subscriberId, channelId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(subscriberId) || !mongoose.Types.ObjectId.isValid(channelId)) {
+        throw new ApiError(400, "Invalid ID format");
+    }
+
+    const subscription = await Subscription.findOne({
+        subscriber: subscriberId,
+        channel: channelId
+    });
+
+    const isSubscribed = !!subscription;
+
+    return res.status(200).json(new ApiResponse(200, isSubscribed, "Subscription status fetched successfully"));
+});
+
 export {
     toggleSubscription,
     getUserChannelSubscribers,
-    getSubscribedChannels
+    getSubscribedChannels,
+    checkSubscriptionStatus
 }
