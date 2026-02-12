@@ -259,13 +259,13 @@ const deleteVideo = asyncHandler(async (req, res) => {
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     /*
- Get video ID from req.params 
-Validate video ID (ObjectId, exists) 
-Fetch video from DB 
-Check if current user is owner 
+ Get video ID from req.params
+Validate video ID (ObjectId, exists)
+Fetch video from DB
+Check if current user is owner
 Only the uploader can toggle visibility
-Flip the isPublished field 
-Save updated video 
+Flip the isPublished field
+Save updated video
 Return updated video info  */
 
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
@@ -288,11 +288,52 @@ Return updated video info  */
     return res.status(200).json(new ApiResponse(200,video,"Publish status changed successfully"))
 })
 
+const getUserVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, sortBy = "createdAt", sortType = "desc" } = req.query
+
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.max(Number(limit) || 10, 1);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const filter = {
+        owner: req.user._id
+    }
+
+    const sort = {};
+    sort[sortBy] = sortType === "asc" ? 1 : -1
+
+    const videos = await Video.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNumber)
+        .populate("owner","username avatar")
+
+    const totalVideos = await Video.countDocuments(filter)
+
+    const totalPages = Math.ceil(totalVideos / limitNumber)
+
+    return res.status(200)
+        .json(new ApiResponse(
+            200,
+            {
+                data: videos,
+                pagination: {
+                    totalVideos,
+                    totalPages,
+                    currentPage: pageNumber,
+                    limit: limitNumber
+                }
+            }
+        ))
+})
+
 export {
     getAllVideos,
     publishAVideo,
     getVideoById,
     updateVideo,
     deleteVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    getUserVideos
 }

@@ -7,12 +7,18 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath, resourceType = null) => {
     try {
         if (!localFilePath) return null
-        // upload the file on cloudinary
+        // detect resource type if not provided
+        const videoExts = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+        if (!resourceType) {
+            const lower = localFilePath.toLowerCase();
+            resourceType = videoExts.some(ext => lower.endsWith(ext)) ? 'video' : 'image';
+        }
+        // upload the file on cloudinary with correct resource type
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "image"
+            resource_type: resourceType
         })
         // file has been uploaded successfully 
         // console.log(`File has been uploaded successfully on cloudinary`,response.url);
@@ -20,12 +26,12 @@ const uploadOnCloudinary = async (localFilePath) => {
         if(fs.existsSync(localFilePath)){
         fs.unlinkSync(localFilePath)}
         return response;
-    } catch (error) {
-       if (localFilePath && fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
-    throw error
-    }  
+        } catch (error) {
+             if (localFilePath && fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath);
+        }
+        throw error
+        }  
 }
 
 
