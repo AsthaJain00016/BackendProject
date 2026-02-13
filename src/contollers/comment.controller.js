@@ -51,6 +51,8 @@ const addComment = asyncHandler(async (req, res) => {
         owner: req.user._id
     })
 
+    await comment.populate("owner", "username avatar")
+
     return res.status(201).json(new ApiResponse(200, comment, "Comment added successfully"))
 
 })
@@ -97,7 +99,7 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(403,"You are not authorized to delete this comment")
     }
 
-    await Comment.deleteOne(commentId)
+    await Comment.findByIdAndDelete(commentId)
 
     return res.status(200).json(new ApiResponse(200,{},"Comment delete successfully"))
 })
