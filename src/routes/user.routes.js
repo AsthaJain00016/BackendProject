@@ -28,5 +28,33 @@ router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updat
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/user/:id").get(verifyJWT, getUserById)
 router.route("/watch-history").get(verifyJWT, getWatchHistory)
+// Saved videos
+router.route("/save/:videoId").post(verifyJWT, async (req, res, next) => {
+    // delegate to controller handler
+    try {
+        const { toggleSaveVideo } = await import('../contollers/user.controller.js');
+        return toggleSaveVideo(req, res, next);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+router.route("/saved-videos").get(verifyJWT, async (req, res, next) => {
+    try {
+        const { getSavedVideos } = await import('../contollers/user.controller.js');
+        return getSavedVideos(req, res, next);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+router.route("/saved/check/:videoId").get(verifyJWT, async (req, res, next) => {
+    try {
+        const { checkVideoSaved } = await import('../contollers/user.controller.js');
+        return checkVideoSaved(req, res, next);
+    } catch (err) {
+        return next(err);
+    }
+});
 
 export default router;

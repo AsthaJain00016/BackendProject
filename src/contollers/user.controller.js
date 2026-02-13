@@ -1,6 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { ApiError } from '../utils/ApiError.js'
 import { User } from '../models/user.model.js'
+import { Video } from '../models/video.model.js'
 import { uploadOnCloudinary } from '../utils/clodinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
@@ -509,6 +510,98 @@ const getUserById = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user[0], "User fetched successfully"));
 });
 
+const toggleSaveVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const userId = req.user._id;
+
+    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Valid video ID is required");
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    const user = await User.findById(userId);
+    
+    // Check if video is already saved
+    const isSaved = user.savedVideos.includes(videoId);
+
+    if (isSaved) {
+        // Unsave the video
+        await User.findByIdAndUpdate(userId, {
+            $pull: { savedVideos: videoId }
+        });
+        return res.status(200).json(new ApiResponse(200, { saved: false }, "Video unsaved successfully"));
+    } else {
+        // Save the video
+        await User.findByIdAndUpdate(userId, {
+            $addToSet: { savedVideos: videoId }
+        });
+        return res.status(200).json(new ApiResponse(200, { saved: true }, "Video saved successfully"));
+    }
+});
+
+const getSavedVideos = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { page = 1, limit = 10 } = req.query;
+    
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const limitNumber = Math.max(Number(limit) || 10, 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const user = await User.findById(userId).populate({
+        path: "savedVideos",
+        populate: {
+            path: "owner",
+            select: "username avatar"
+        },
+        options: {
+            sort: { createdAt: -1 },
+            skip: skip,
+            limit: limitNumber
+        }
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const savedVideos = user.savedVideos;
+    const totalSavedVideos = user.savedVideos.length;
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            data: savedVideos,
+            pagination: {
+                totalSavedVideos,
+                page: pageNumber,
+                limit: limitNumber,
+                totalPages: Math.ceil(totalSavedVideos / limitNumber)
+            }
+        }, "Saved videos fetched successfully")
+    );
+});
+
+const checkVideoSaved = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const userId = req.user._id;
+
+    if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Valid video ID is required");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isSaved = user.savedVideos.includes(videoId);
+
+    return res.status(200).json(new ApiResponse(200, { saved: isSaved }, "Video saved status fetched successfully"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -522,4 +615,7 @@ export {
     getUserChannelProfile,
     getWatchHistory,
     getUserById,
+    toggleSaveVideo,
+    getSavedVideos,
+    checkVideoSaved,
 }

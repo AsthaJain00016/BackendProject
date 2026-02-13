@@ -38,6 +38,12 @@ const userSchema=new Schema({
             ref:"Video"
         }
     ],
+    savedVideos:[
+        {
+            type:Schema.Types.ObjectId,
+            ref:"Video"
+        }
+    ],
     password:{
         type:String,
         required:[true, "Password is required"]
