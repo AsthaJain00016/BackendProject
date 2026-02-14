@@ -13,9 +13,9 @@ const AI_CONFIG = {
 };
 
 // Helper function to call AI API
-const callAI = async (messages) => {
+const callAI = async (messages, context = {}) => {
     if (!AI_CONFIG.apiKey) {
-        return getMockResponse(messages);
+        return getMockResponse(messages, context);
     }
 
     try {
@@ -36,12 +36,12 @@ const callAI = async (messages) => {
         return response.data.choices[0].message.content;
     } catch (error) {
         console.error("AI API Error:", error);
-        return getMockResponse(messages);
+        return getMockResponse(messages, context);
     }
 };
 
 // Mock responses for testing without API key
-const getMockResponse = (messages) => {
+const getMockResponse = (messages, context = {}) => {
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
     
     // Greeting responses
@@ -72,8 +72,12 @@ const getMockResponse = (messages) => {
         return recommendations[Math.floor(Math.random() * recommendations.length)];
     }
     
-    // Video overview/summary responses - more varied
+    // Video overview/summary responses - more varied and context-aware
     if (lastMessage.includes("overview") || lastMessage.includes("summary") || lastMessage.includes("explain")) {
+        // If we have video context, create a tailored overview
+        if (context.videoTitle && context.videoDescription) {
+            return `📺 **${context.videoTitle}**\n\n${context.videoDescription}\n\nDuration: ${context.duration || 'Unknown'} minutes\nChannel: ${context.channel || 'Unknown'}\n\nThis is an informative video that provides valuable insights on its topic. The content is well-structured and engaging for viewers interested in this subject matter.`;
+        }
         const overviews = [
             "This video appears to cover an important topic with clear demonstrations and practical insights. The content is well-structured to keep viewers engaged throughout. Great choice! 👍",
             "Looks like a comprehensive video that breaks down complex ideas into understandable segments. It combines visual examples with clear explanations, making it very informative.",
@@ -111,13 +115,14 @@ const getMockResponse = (messages) => {
     
     // Title generation responses
     if ((lastMessage.includes("title") || lastMessage.includes("name")) && (lastMessage.includes("video") || lastMessage.includes("generate"))) {
-        const titles = [
-            "Here are some engaging title ideas:\n1️⃣ The Complete Guide to Your Topic - Everything Explained\n2️⃣ You Won't Believe What Happens Next [Topic]\n3️⃣ [Topic] Mastery: Everything Creators Need to Know\n4️⃣ Shocking Truth About [Topic] Revealed\n5️⃣ [Topic]: The Ultimate Tutorial for 2024",
-            "Title suggestions for maximum engagement:\n• Ultimate Secrets to [Topic] Success\n• How to [Desired Action] in [Topic] - Step by Step\n• [Topic] Breakdown: What You MUST Know\n• The [Topic] Revolution - Everything Changed\n• [Topic] Hacks That Actually Work",
-            "Consider these catchy titles:\n» Why Everyone Is Talking About [Topic] Now\n» [Topic] Explained: A Beginner's Guide\n» Game-Changing [Topic] Strategies for 2024\n» The Truth About [Topic] - Full Breakdown\n» [Topic] Made Simple: Expert Tips Inside",
-            "Compelling title options:\n✓ Master [Topic]: Expert Secrets Revealed\n✓ What You Didn't Know About [Topic]\n✓ The [Topic] Framework That Changed Everything\n✓ [Topic] 101: From Basics to Advanced\n✓ Inside Look: [Topic] Like Never Before"
+        const topic = context.topic || "Your Topic";
+        const titleTemplates = [
+            `The Complete Guide to ${topic} - Everything Explained\nYou Won't Believe What Happens Next ${topic}\n${topic} Mastery: Everything Creators Need to Know\nShocking Truth About ${topic} Revealed\n${topic}: The Ultimate Tutorial for 2024`,
+            `Ultimate Secrets to ${topic} Success\nHow to Master ${topic} - Step by Step\n${topic} Breakdown: What You MUST Know\nThe ${topic} Revolution - Everything Changed\n${topic} Hacks That Actually Work`,
+            `Why Everyone Is Talking About ${topic} Now\n${topic} Explained: A Beginner's Guide\nGame-Changing ${topic} Strategies for 2024\nThe Truth About ${topic} - Full Breakdown\n${topic} Made Simple: Expert Tips Inside`,
+            `Master ${topic}: Expert Secrets Revealed\nWhat You Didn't Know About ${topic}\nThe ${topic} Framework That Changed Everything\n${topic} 101: From Basics to Advanced\nInside Look: ${topic} Like Never Before`
         ];
-        return titles[Math.floor(Math.random() * titles.length)];
+        return titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
     }
     
     // Upload help
@@ -206,7 +211,15 @@ const getVideoOverview = asyncHandler(async (req, res) => {
         { role: "user", content: prompt }
     ];
 
-    const overview = await callAI(messages);
+    // Pass video context for mock response
+    const context = {
+        videoTitle: video.title,
+        videoDescription: video.description,
+        duration: Math.floor(video.duration / 60),
+        channel: video.owner.username
+    };
+
+    const overview = await callAI(messages, context);
 
     return res.status(200).json(new ApiResponse(200, { overview, video }, "Video overview generated successfully"));
 });
@@ -308,7 +321,12 @@ const generateVideoTitle = asyncHandler(async (req, res) => {
         { role: "user", content: prompt }
     ];
 
-    const titles = await callAI(messages);
+    // Pass topic context for mock response
+    const context = {
+        topic: topic || description
+    };
+
+    const titles = await callAI(messages, context);
 
     // Parse the titles into an array
     const titleList = titles.split('\n').filter(t => t.trim()).slice(0, 5);

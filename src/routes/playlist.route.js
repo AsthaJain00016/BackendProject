@@ -7,14 +7,15 @@ router.use(verifyJWT)
 
 router.route("/").post(createPlaylist)
 
+// Specific routes MUST come before generic routes
+router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
+router.route("/remove/:videoId/:playlistId").patch(removeVideoFromPlaylist)
+router.route("/users/:userId").get(getUserPlaylists)
+
+// Generic routes come after
 router.route("/:playlistId")
 .get(getPlaylistById)
 .patch(updatePlaylist)
 .delete(deletePlaylist)
-
-router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
-router.route("/remove/:videoId/:playlistId").patch(removeVideoFromPlaylist)
-
-router.route("/users/:userId").get(getUserPlaylists)
 
 export default router;
