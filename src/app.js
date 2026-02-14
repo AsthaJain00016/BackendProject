@@ -33,6 +33,7 @@ import likeRouter from './routes/likes.routes.js'
 import tweetRouter from './routes/tweet.routes.js'
 import playlistRouter from './routes/playlist.route.js'
 import searchRouter from './routes/search.route.js'
+import aiRouter from './routes/ai.routes.js'
 // routes declaration
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/videos", videoRouter)
@@ -42,5 +43,6 @@ app.use("/api/v1/comments",commentRouter)
 app.use("/api/v1/likes",likeRouter)
 app.use("/api/v1/playlists",playlistRouter)
 app.use("/api/v1/search", searchRouter)
+app.use("/api/v1/ai", aiRouter)
 // http://localhost:8000/api/v1/users/register
 export {app}
