@@ -112,7 +112,8 @@ console.log("BODY:", req.body);
         thumbnail=uploadThumbnail.url;
     }
     else{
-        thumbnail = video.thumbnail_url || video.secure_url.replace(".mp4", ".jpg");
+        // Create a default thumbnail with video title
+        thumbnail = `https://via.placeholder.com/320x180?text=${encodeURIComponent(title.substring(0, 20))}`;
     }
      
 
@@ -207,7 +208,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     
     if(req.file?.path){
         const uploadThumbnail=await uploadOnCloudinary(req.file.path);
-        updatedFields.thumbnail=uploadThumbnail;
+        updatedFields.thumbnail=uploadThumbnail.url;
     }
 
     else if(req.body.thumbnail){

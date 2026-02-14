@@ -602,6 +602,35 @@ const checkVideoSaved = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, { saved: isSaved }, "Video saved status fetched successfully"));
 });
 
+const addToWatchHistory = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!videoId?.trim()) {
+        throw new ApiError(400, "Video ID is missing");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video ID format");
+    }
+
+    // Check if video exists
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    // Get the user
+    const user = await User.findById(req.user._id);
+
+    // Add to watch history if not already present
+    if (!user.watchHistory.includes(videoId)) {
+        user.watchHistory.push(videoId);
+        await user.save();
+    }
+
+    return res.status(200).json(new ApiResponse(200, {}, "Video added to watch history"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -618,4 +647,5 @@ export {
     toggleSaveVideo,
     getSavedVideos,
     checkVideoSaved,
+    addToWatchHistory,
 }

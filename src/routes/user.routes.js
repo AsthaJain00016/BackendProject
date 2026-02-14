@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeCurrentPassword, getCurrentUser, getUserById, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../contollers/user.controller.js";
+import { changeCurrentPassword, getCurrentUser, getUserById, getUserChannelProfile, getWatchHistory, loginUser, logoutUser, refreshAccessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, addToWatchHistory } from "../contollers/user.controller.js";
 import { upload } from '../middlewares/multer.middleware.js'
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
@@ -28,6 +28,7 @@ router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updat
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/user/:id").get(verifyJWT, getUserById)
 router.route("/watch-history").get(verifyJWT, getWatchHistory)
+router.route("/watch-history/:videoId").post(verifyJWT, addToWatchHistory)
 // Saved videos
 router.route("/save/:videoId").post(verifyJWT, async (req, res, next) => {
     // delegate to controller handler

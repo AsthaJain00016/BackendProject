@@ -44,7 +44,13 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
     const playlist = await Playlist.findById(playlistId)
         .populate("owner", "username avatar")
-        .populate("videos");
+        .populate({
+            path: "videos",
+            populate: {
+                path: "owner",
+                select: "username avatar"
+            }
+        });
     if (!playlist) {
         throw new ApiError(404, "Playlist does not exists")
     }
@@ -79,7 +85,13 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     playlist.videos.push(videoId)
     await playlist.save()
 
-    await playlist.populate('videos')
+    await playlist.populate({
+        path: "videos",
+        populate: {
+            path: "owner",
+            select: "username avatar"
+        }
+    })
 
     return res.status(200).json(new ApiResponse(200, playlist, "Video added successfully to the playlist"))
 })
@@ -106,7 +118,13 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         {
             new: true
         }
-    ).populate("videos")
+    ).populate({
+        path: "videos",
+        populate: {
+            path: "owner",
+            select: "username avatar"
+        }
+    })
     if (!playlist) {
         throw new ApiError(
             404,
@@ -162,7 +180,13 @@ const updatePlaylist = asyncHandler(async (req, res) => {
         {
             new : true
         }
-    ).populate("videos")
+    ).populate({
+        path: "videos",
+        populate: {
+            path: "owner",
+            select: "username avatar"
+        }
+    })
 
     if(!playlist){
         throw new ApiError(404,"Playlist not found or you are not authorized to update this playlist")
