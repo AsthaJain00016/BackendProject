@@ -17,6 +17,11 @@ const likeSchema= new Schema(
          likedBy:{
             type:Schema.Types.ObjectId,
             ref:"User"
+         },
+         like:{
+            type:Boolean,
+            default:true,
+            // true = like, false = dislike
         },
 
     },

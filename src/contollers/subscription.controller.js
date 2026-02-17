@@ -70,8 +70,12 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 const checkSubscriptionStatus = asyncHandler(async (req, res) => {
     const { subscriberId, channelId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(subscriberId) || !mongoose.Types.ObjectId.isValid(channelId)) {
-        throw new ApiError(400, "Invalid ID format");
+    if (!mongoose.Types.ObjectId.isValid(subscriberId)) {
+        throw new ApiError(400, `Invalid subscriberId format: ${subscriberId}`);
+    }
+    
+    if (!mongoose.Types.ObjectId.isValid(channelId)) {
+        throw new ApiError(400, `Invalid channelId format: ${channelId}`);
     }
 
     const subscription = await Subscription.findOne({
