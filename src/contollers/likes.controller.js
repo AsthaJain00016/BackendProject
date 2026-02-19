@@ -200,11 +200,30 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     )
 
 })
+const checkVideoLikeStatus = async (req, res) => {
+  const { videoId } = req.params;
+  const userId = req.user._id;
+
+  const like = await Like.findOne({
+    video: videoId,
+    user: userId
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      liked: like?.type === "like",
+      disliked: like?.type === "dislike"
+    }
+  });
+};
+
 
 export {
     toggleCommentLike,
     toggleTweetLike,
     toggleVideoLike,
     toggleVideoDislike,
-    getLikedVideos
+    getLikedVideos,
+    checkVideoLikeStatus
 }

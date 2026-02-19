@@ -28,11 +28,11 @@ app.use((req, res, next) => {
 import userRouter from './routes/user.routes.js'
 import videoRouter from './routes/video.routes.js'
 import subscriptionRouter from './routes/subscription.routes.js'
-import commentRouter from './routes/comment.route.js'
+import commentRouter from './routes/comment.routes.js'
 import likeRouter from './routes/likes.routes.js'
 import tweetRouter from './routes/tweet.routes.js'
-import playlistRouter from './routes/playlist.route.js'
-import searchRouter from './routes/search.route.js'
+import playlistRouter from './routes/playlist.routes.js'
+import searchRouter from './routes/search.routes.js'
 import aiRouter from './routes/ai.routes.js'
 // routes declaration
 app.use("/api/v1/users",userRouter)

@@ -630,6 +630,18 @@ const addToWatchHistory = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, {}, "Video added to watch history"));
 });
+export const clearWatchHistory = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, {
+        $set: { watchHistory: [] }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Watch history cleared successfully")
+    );
+});
+
 
 export {
     registerUser,
