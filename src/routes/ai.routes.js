@@ -15,7 +15,7 @@ const router = express.Router();
 router.post('/chat', asyncHandler(chatWithAI));
 
 // Get Video Overview - Provide summary of a video
-router.post('/video/overview', asyncHandler(getVideoOverview));
+router.post('/overview', asyncHandler(getVideoOverview));
 
 // Get Video Recommendations - Suggest videos based on preferences
 router.post('/video/recommendations', asyncHandler(getVideoRecommendations));

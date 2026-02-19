@@ -2,6 +2,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import{ Video} from "../models/video.model.js"
 
 /**
  * CORE AI CALL FUNCTION
@@ -50,18 +51,42 @@ export const chatWithAI = asyncHandler(async (req, res) => {
 });
 
 export const getVideoOverview = asyncHandler(async (req, res) => {
-    const { title, description, duration, channel } = req.body;
+    const { videoId } = req.body;
 
-    const systemPrompt = "You are an expert video summarizer. Create smart, engaging overviews.";
-    const userPrompt = `Generate a human-written style overview for:
-    Title: ${title}
-    Description: ${description}
-    Duration: ${duration}
-    Channel: ${channel}`;
+    if (!videoId) {
+        return res.status(400).json({ message: "Video ID is required" });
+    }
+
+    const video = await Video.findById(videoId).populate("owner");
+
+    if (!video) {
+        return res.status(404).json({ message: "Video not found" });
+    }
+
+    const systemPrompt = `
+    You are an expert YouTube video summarizer.
+    Write engaging, human-like video overviews.
+    Keep it natural and professional.
+    `;
+
+    const userPrompt = `
+    Generate an engaging overview for:
+
+    Title: ${video.title}
+    Description: ${video.description}
+    Duration: ${video.duration} minutes
+    Channel: ${video.owner?.username}
+
+    Write 1-2 paragraphs.
+    `;
 
     const overview = await callFreeAI(userPrompt, systemPrompt);
-    return res.status(200).json(new ApiResponse(200, { overview }, "Overview generated"));
+
+    return res.status(200).json(
+        new ApiResponse(200, { overview }, "Overview generated")
+    );
 });
+
 
 export const getVideoRecommendations = asyncHandler(async (req, res) => {
     const { interests } = req.body;
