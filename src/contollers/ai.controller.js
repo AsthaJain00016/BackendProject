@@ -44,9 +44,9 @@ export const chatWithAI = asyncHandler(async (req, res) => {
     const { message } = req.body;
     if (!message) throw new ApiError(400, "Message is required");
 
-    const systemPrompt = "You are ViX AI — an intelligent SaaS assistant. Be natural, human-like, and conversational.";
+    const systemPrompt = "You are StreamVerse AI — an intelligent SaaS assistant. Be natural, human-like, and conversational.";
     const reply = await callFreeAI(message, systemPrompt);
-
+    console.log(reply)
     return res.status(200).json(new ApiResponse(200, { response: reply }, "AI response generated"));
 });
 
