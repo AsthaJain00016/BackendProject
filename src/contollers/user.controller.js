@@ -24,6 +24,12 @@ const generateAccessAndRefreshTokens = async (userId) => {
     }
 };
 
+const getCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+});
+
 
 // get user detail from frontend
 // validation -- not empty
@@ -120,10 +126,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
+    const options = getCookieOptions()
 
     return res
         .status(200)
@@ -151,10 +154,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         }
     )
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
+    const options = getCookieOptions()
 
     return res
         .status(200)
@@ -182,17 +182,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Refresh token is expired or used")
         }
 
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
+        const options = getCookieOptions()
 
         const { accessToken, newrefreshToken } = await generateAccessAndRefreshTokens(user._id)
 
         return res
             .status(200)
-            .cookie("accessToken", accessToken)
-            .cookie("refreshToken", newrefreshToken)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newrefreshToken, options)
             .json(
                 new ApiResponse(200, { accessToken, newrefreshToken },
                     "Access Token refreshed"
