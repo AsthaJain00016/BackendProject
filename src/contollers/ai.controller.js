@@ -1,38 +1,44 @@
-
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import{ Video} from "../models/video.model.js"
 
-/**
- * CORE AI CALL FUNCTION
- * Uses Pollinations.ai (Free, No API Key needed)
- */
+import axios from "axios";
+
 const callFreeAI = async (userPrompt, systemPrompt = "") => {
     try {
-        const response = await fetch('https://text.pollinations.ai/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        const response = await axios.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            {
+                model: "openai/gpt-4o-mini", // you can change model
                 messages: [
-                    { role: 'system', content: systemPrompt || "You are a helpful assistant." },
-                    { role: 'user', content: userPrompt }
+                    {
+                        role: "system",
+                        content: systemPrompt,
+                    },
+                    {
+                        role: "user",
+                        content: userPrompt,
+                    },
                 ],
-                model: 'openai', // This is a free-tier wrapper model
-                seed: 42,        // Keeps responses somewhat consistent
-                jsonMode: false
-            })
-        });
+                temperature: 0.7,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json",
 
-        if (!response.ok) {
-            throw new Error(`AI Provider responded with ${response.status}`);
-        }
+                    // recommended by OpenRouter
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "StreamVerse AI",
+                },
+            }
+        );
 
-        const text = await response.text();
-        return text;
+        return response.data.choices[0].message.content;
     } catch (error) {
-        console.error("AI Error:", error.message);
-        throw new ApiError(500, "AI Service is temporarily unavailable.");
+        console.error("OpenRouter Error:", error?.response?.data || error.message);
+        return "AI service is temporarily unavailable. Please try again later.";
     }
 };
 
@@ -44,7 +50,13 @@ export const chatWithAI = asyncHandler(async (req, res) => {
     const { message } = req.body;
     if (!message) throw new ApiError(400, "Message is required");
 
-    const systemPrompt = "You are StreamVerse AI — an intelligent SaaS assistant. Be natural, human-like, and conversational.";
+    const systemPrompt = `You are StreamVerse AI — an intelligent SaaS assistant. Be natural, human-like, and conversational.
+    IMPORTANT RULES:
+- Do NOT use markdown formatting
+- Do NOT use **bold**, *italic*, or bullet symbols
+- Return plain simple text only  and you can use emojis only when needed
+- Do not use numbering or special symbols
+    `;
     const reply = await callFreeAI(message, systemPrompt);
     console.log(reply)
     return res.status(200).json(new ApiResponse(200, { response: reply }, "AI response generated"));
